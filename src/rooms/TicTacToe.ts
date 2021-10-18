@@ -1,26 +1,29 @@
 import { Room, Client } from 'colyseus';
-import { TicTacToeState } from './schema/TicTacToeState';
+import { State, Player } from './schema/TicTacToeState';
 
-export class TicTacToe extends Room<TicTacToeState> {
-  onCreate(options: any) {
-    this.setState(new TicTacToeState());
+// Game logic taken from: https://github.com/BornaSepic/Tic-Tac-Toe/blob/master/script.js
 
-    this.onMessage('type', (client, message) => {
-      //
-      // handle "type" message
-      //
+export class TicTacToe extends Room<State> {
+  maxClients = 2;
+
+  onCreate() {
+    this.setState(new State());
+
+    this.onMessage('move', (client, data) => {
+      const player = this.state.players.get(client.sessionId);
+
+      console.log(`${client.sessionId} - ${player.piece}`);
     });
   }
 
-  onJoin(client: Client, options: any) {
-    console.log(client.sessionId, 'joined!');
-  }
+  onJoin(client: Client) {
+    const players = this.state.players;
 
-  onLeave(client: Client, consented: boolean) {
-    console.log(client.sessionId, 'left!');
-  }
+    players.set(client.sessionId, new Player());
 
-  onDispose() {
-    console.log('room', this.roomId, 'disposing...');
+    if (players.size === 2) {
+      this.state.active = true;
+      // pick random player and set X
+    }
   }
 }
